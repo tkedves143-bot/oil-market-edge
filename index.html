@@ -33,7 +33,7 @@ input{
 }
 input:focus{border-color:var(--accent)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .kpi{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px}
 .kpi .v{font-size:22px;font-weight:700}
 .kpi .l{font-size:12px;color:var(--muted);margin-top:3px}
@@ -60,6 +60,23 @@ button.danger{background:transparent;color:#ff8f8f}
 .note{width:100%;min-height:72px;background:var(--card2);border:1px solid var(--line);
  border-radius:12px;color:var(--text);padding:12px;font-size:15px;resize:vertical}
 .footer{color:var(--muted);font-size:11px;line-height:1.5;padding:4px 3px 24px}
+.explain{margin-top:14px;display:grid;gap:10px}
+.explainCard{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:13px}
+.explainCard h3{font-size:16px;margin:0 0 7px}
+.explainCard p{font-size:14px;line-height:1.5;margin:0;color:#dbe4ee}
+.term{border-bottom:1px dashed var(--accent);cursor:help}
+.tradeTitle{font-size:18px;font-weight:800;margin-bottom:3px}
+.tradeMeta{font-size:13px;color:var(--muted);margin-bottom:10px}
+.sectionTitle{font-size:20px;font-weight:800;margin:0 0 6px}
+.sectionIntro{font-size:13px;color:var(--muted);line-height:1.45;margin-bottom:12px}
+.tradeChoice{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;width:100%;margin:7px 0;background:var(--card2)}
+.tradeChoice.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.choiceMain{font-size:15px;font-weight:800}.choiceSub{font-size:12px;color:var(--muted);margin-top:3px}.choiceArrow{font-size:18px;color:var(--accent)}
+.callout{border-left:3px solid var(--accent);padding:10px 12px;background:rgba(124,196,255,.07);border-radius:10px;margin:10px 0}
+.callout strong{display:block;margin-bottom:4px}.callout p{margin:0;color:#dbe4ee;font-size:14px;line-height:1.45}
+.win{border-left-color:var(--good)}.lose{border-left-color:var(--bad)}
+.detailsGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.detail{background:#0d131a;border:1px solid var(--line);border-radius:12px;padding:10px}.detail .dv{font-size:18px;font-weight:800}.detail .dl{font-size:11px;color:var(--muted);margin-top:3px}
+@media (max-width:520px){.detailsGrid{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){
   .summary{grid-template-columns:1fr}
   th:nth-child(4),td:nth-child(4){display:none}
@@ -69,28 +86,30 @@ button.danger{background:transparent;color:#ff8f8f}
 <body>
 <div class="wrap">
   <h1>Oil Market Edge</h1>
-  <div class="sub">Manual Brent / Kalshi threshold calculator — iPhone version</div>
+  <div class="sub">Version 2 — plain-English commodity prediction-market research desk</div>
 
   <div class="card">
     <div class="grid2">
       <div>
-        <label>Brent reference price ($)</label>
+        <label>Current Brent reference price ($)</label>
+        <div class="small" style="margin:0 0 7px">The oil price we compare with each prediction-market target.</div>
         <input id="brent" type="number" step="0.01" value="104.60">
       </div>
       <div>
-        <label>Stake per contract ($)</label>
-        <input id="stake" type="number" step="0.01" value="3.00">
+        <label>How much are you considering risking? ($)</label>
+        <div class="small" style="margin-top:6px">We’ll use this same amount to compare each potential trade. Nothing is being placed from this app.</div>
+        <input id="stake" type="number" step="0.01" value="5.00">
       </div>
     </div>
     <div class="summary">
-      <div class="kpi"><div class="v" id="bestCushion">—</div><div class="l">Largest cushion</div></div>
-      <div class="kpi"><div class="v" id="lowestBE">—</div><div class="l">Lowest break-even</div></div>
+      <div class="kpi"><div class="v" id="riskAmount">—</div><div class="l">Amount being compared per trade</div></div>
       <div class="kpi"><div class="v" id="updated">—</div><div class="l">Last recalculated</div></div>
     </div>
   </div>
 
   <div class="card">
-    <label>Kalshi thresholds and current YES prices</label>
+    <label>Potential trades to compare</label>
+    <div class="small" style="margin-bottom:12px">Threshold = the Brent price the YES contract must finish above. YES price = what the market currently charges for a $1 winning contract.</div>
     <div id="rows"></div>
     <div class="actions">
       <button id="add">+ Add threshold</button>
@@ -99,28 +118,33 @@ button.danger{background:transparent;color:#ff8f8f}
   </div>
 
   <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Contract</th>
-          <th>Cushion</th>
-          <th>Break-even</th>
-          <th>Contracts</th>
-          <th>Payout</th>
-          <th>Profit</th>
-        </tr>
-      </thead>
-      <tbody id="results"></tbody>
-    </table>
-    <div class="small" style="margin-top:10px">
-      Assumes the YES price you enter is your actual execution price. Excludes fees, slippage and settlement-basis differences.
-    </div>
+    <div class="sectionTitle">Choose a trade to understand</div>
+    <div class="sectionIntro">Tap one potential trade below. We’ll explain it in ordinary English before you decide whether it deserves a closer look.</div>
+    <div id="tradeChoices"></div>
+  </div>
+
+  <div class="card" id="researchDesk">
+    <div class="sectionTitle">Plain-English research desk</div>
+    <div class="sectionIntro">This explains the selected trade. It does not place an order and it does not promise the outcome.</div>
+    <div id="explanations" class="explain"></div>
   </div>
 
   <div class="card">
-    <label>Quick news / market note</label>
+    <details>
+      <summary style="font-weight:800;cursor:pointer">Show the trader math</summary>
+      <div class="small" style="margin:8px 0 4px">The technical numbers are here when you want them, but they no longer lead the experience.</div>
+      <table>
+        <thead><tr><th>Contract</th><th>Cushion</th><th>Break-even</th><th>Contracts</th><th>Payout</th><th>Profit</th></tr></thead>
+        <tbody id="results"></tbody>
+      </table>
+      <div class="small" style="margin-top:10px">Assumes the YES price entered is the execution price. Excludes fees, slippage and settlement-basis differences.</div>
+    </details>
+  </div>
+
+  <div class="card">
+    <label>What is happening in the market right now?</label>
     <textarea id="note" class="note" placeholder="Example: Saudi pipeline attacked; Brent +$2.10 since headline..."></textarea>
-    <div class="badge">Saved automatically on this device</div>
+    <div class="small" style="margin-top:8px">For now this is your manual context note. A later version can gather and source relevant events automatically.</div><div class="badge">Saved automatically on this device</div>
   </div>
 
   <div class="footer">
@@ -141,6 +165,9 @@ const stake = document.getElementById("stake");
 const rows = document.getElementById("rows");
 const results = document.getElementById("results");
 const note = document.getElementById("note");
+const explanations = document.getElementById("explanations");
+const tradeChoices = document.getElementById("tradeChoices");
+let selectedTrade = +(localStorage.getItem("oilEdgeSelectedTrade") || 0);
 note.value = localStorage.getItem("oilEdgeNote") || "";
 brent.value = localStorage.getItem("oilEdgeBrent") || brent.value;
 stake.value = localStorage.getItem("oilEdgeStake") || stake.value;
@@ -153,8 +180,8 @@ function renderRows(){
     const d = document.createElement("div");
     d.className = "rowedit";
     d.innerHTML = `
-      <div><label>Threshold ($)</label><input type="number" step="0.50" value="${r.t}" data-i="${i}" data-k="t"></div>
-      <div><label>YES price (¢)</label><input type="number" step="0.1" min="0.1" max="99.9" value="${r.p}" data-i="${i}" data-k="p"></div>
+      <div><label>Oil must finish above ($)</label><input type="number" step="0.50" value="${r.t}" data-i="${i}" data-k="t"></div>
+      <div><label>Current YES cost (¢)</label><input type="number" step="0.1" min="0.1" max="99.9" value="${r.p}" data-i="${i}" data-k="p"></div>
       <button class="danger" data-del="${i}" aria-label="Delete">×</button>`;
     rows.appendChild(d);
   });
@@ -175,8 +202,11 @@ function save(){
 function calc(){
   const b = +brent.value, s = +stake.value;
   results.innerHTML="";
-  let maxC = -Infinity, minBE = Infinity;
-  data.forEach(r=>{
+  explanations.innerHTML="";
+  tradeChoices.innerHTML="";
+  if(selectedTrade >= data.length) selectedTrade = Math.max(0, data.length-1);
+
+  data.forEach((r,i)=>{
     const threshold = +r.t, cents = +r.p;
     const cushion = b-threshold;
     const be = cents;
@@ -184,8 +214,7 @@ function calc(){
     const contracts = price>0 ? s/price : NaN;
     const payout = contracts;
     const profit = payout-s;
-    maxC = Math.max(maxC,cushion);
-    minBE = Math.min(minBE,be);
+
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>&gt; $${threshold.toFixed(2)}</td>
@@ -195,15 +224,64 @@ function calc(){
       <td>${money(payout)}</td>
       <td class="${profit>=0?'pos':'neg'}">${money(profit)}</td>`;
     results.appendChild(tr);
+
+    const choice = document.createElement("button");
+    choice.className = "tradeChoice" + (i===selectedTrade ? " selected" : "");
+    choice.innerHTML = `<div><div class="choiceMain">YES — Brent above $${threshold.toFixed(2)}</div><div class="choiceSub">YES costs ${cents.toFixed(1)}¢ • ${cushion>=0?`Brent is $${Math.abs(cushion).toFixed(2)} above target`:`Needs a $${Math.abs(cushion).toFixed(2)} rise`} • ${money(profit)} potential profit on $${s.toFixed(2)}</div></div><div class="choiceArrow">›</div>`;
+    choice.addEventListener("click", ()=>{ selectedTrade=i; localStorage.setItem("oilEdgeSelectedTrade",i); calc(); document.getElementById("researchDesk").scrollIntoView({behavior:"smooth",block:"start"}); });
+    tradeChoices.appendChild(choice);
   });
-  document.getElementById("bestCushion").textContent = isFinite(maxC) ? (maxC>=0?"+":"")+"$"+maxC.toFixed(2) : "—";
-  document.getElementById("lowestBE").textContent = isFinite(minBE) ? minBE.toFixed(1)+"%" : "—";
+
+  if(data.length){
+    const r=data[selectedTrade];
+    const threshold=+r.t, cents=+r.p, cushion=b-threshold, price=cents/100;
+    const contracts=price>0?s/price:NaN, payout=contracts, profit=payout-s;
+    const above = cushion>=0;
+    const context = note.value.trim();
+    const card=document.createElement("div");
+    card.className="explainCard";
+    card.innerHTML=`
+      <div class="tradeTitle">You’re considering $${s.toFixed(2)} on Brent above $${threshold.toFixed(2)}</div>
+      <div class="tradeMeta">YES costs ${cents.toFixed(1)}¢ right now • This app is analyzing the trade, not placing it.</div>
+
+      <div class="callout"><strong>What has to happen?</strong><p>At settlement, the market’s official Brent reference must finish above $${threshold.toFixed(2)}. If it does, YES pays $1 per contract. If it does not, YES pays $0.</p></div>
+
+      <div class="detailsGrid">
+        <div class="detail"><div class="dv">$${s.toFixed(2)}</div><div class="dl">Most you can lose</div></div>
+        <div class="detail"><div class="dv">${money(profit)}</div><div class="dl">Approx. profit if YES wins</div></div>
+        <div class="detail"><div class="dv">${money(payout)}</div><div class="dl">Approx. total returned if YES wins</div></div>
+        <div class="detail"><div class="dv">${cents.toFixed(1)}%</div><div class="dl">Break-even win rate before fees</div></div>
+      </div>
+
+      <h3>What does ${cents.toFixed(1)}¢ YES mean?</h3>
+      <p>You pay about ${cents.toFixed(1)}¢ for each contract that pays $1 if YES wins. At that price, you would need comparable trades to win more than about ${cents.toFixed(1)} times out of 100 to make money over the long run, before fees.</p>
+
+      <h3 style="margin-top:12px">How much room does this trade have?</h3>
+      <p>${above ? `Brent is currently $${Math.abs(cushion).toFixed(2)} above the $${threshold.toFixed(2)} target. In plain English, Brent could fall about $${Math.abs(cushion).toFixed(2)} from the reference price you entered and still be at the threshold.` : `Brent is currently $${Math.abs(cushion).toFixed(2)} below the $${threshold.toFixed(2)} target. It needs to rise by more than that amount before settlement for YES to win.`} That distance is the <span class="term">cushion</span>; it is not the probability of winning.</p>
+
+      <div class="callout win"><strong>Why might this work?</strong><p>${above ? `The current Brent reference is already above the target, giving YES a $${Math.abs(cushion).toFixed(2)} price cushion.` : `YES can still win if Brent rises by more than $${Math.abs(cushion).toFixed(2)} before settlement.`} A proper recommendation will eventually also weigh time remaining, volatility, the settlement feed and relevant supply/news evidence.</p></div>
+
+      <div class="callout lose"><strong>Why might this fail?</strong><p>${above ? `Oil can lose a $${Math.abs(cushion).toFixed(2)} cushion quickly. De-escalation, weaker demand, supply restoration or a settlement-feed difference could move the official reference below the target.` : `The trade starts below its target, so it needs an upward oil move before time runs out. A flat or falling market would work against YES.`}</p></div>
+
+      <h3>What would change our mind?</h3>
+      <p>A large Brent move, a major supply disruption or restoration, OPEC+ news, geopolitical escalation or de-escalation, a material change in the YES price, or simply less time remaining can change the quality of this trade. Version 2 will not invent a fair-value probability until that model is built and tested.</p>
+
+      ${context ? `<h3 style="margin-top:12px">Your current market note</h3><p>${escapeHtml(context)}</p>` : `<h3 style="margin-top:12px">Current market context</h3><p>No market note has been entered yet. For this checkpoint, news context is manual; automated sourced news belongs in the next analytical layer.</p>`}
+    `;
+    explanations.appendChild(card);
+  } else {
+    tradeChoices.innerHTML='<div class="small">Add a threshold above to begin comparing a trade.</div>';
+    explanations.innerHTML='<div class="small">No trade selected.</div>';
+  }
+  document.getElementById("riskAmount").textContent = isFinite(s) ? "$"+s.toFixed(2) : "—";
   document.getElementById("updated").textContent = new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
   save();
 }
+function escapeHtml(str){ return str.replace(/[&<>'"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+
 brent.addEventListener("input", calc);
 stake.addEventListener("input", calc);
-note.addEventListener("input", ()=>localStorage.setItem("oilEdgeNote", note.value));
+note.addEventListener("input", ()=>{ localStorage.setItem("oilEdgeNote", note.value); calc(); });
 document.getElementById("add").addEventListener("click", ()=>{
   data.push({t:99.00,p:50.0}); save(); renderRows(); calc();
 });
