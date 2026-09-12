@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Oil Market Edge</title>
+<style>
+:root{
+  --bg:#0b0f14; --card:#151b23; --card2:#10161d; --text:#f4f7fb;
+  --muted:#9aa7b5; --line:#26313d; --good:#35d07f; --bad:#ff6b6b;
+  --accent:#7cc4ff; --warn:#ffd166;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Arial,sans-serif;
+  padding:env(safe-area-inset-top) 14px calc(20px + env(safe-area-inset-bottom));
+}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:28px;margin:18px 0 4px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:18px;
+  padding:16px; margin-bottom:14px; box-shadow:0 8px 30px rgba(0,0,0,.18)
+}
+label{display:block;color:var(--muted);font-size:13px;margin-bottom:7px}
+input{
+  width:100%; background:var(--card2); border:1px solid var(--line);
+  border-radius:12px; color:var(--text); font-size:20px; padding:13px 14px;
+  outline:none;
+}
+input:focus{border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.kpi{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi .v{font-size:22px;font-weight:700}
+.kpi .l{font-size:12px;color:var(--muted);margin-top:3px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 6px;text-align:right;border-bottom:1px solid var(--line);font-size:14px}
+th:first-child, td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.pos{color:var(--good);font-weight:700}
+.neg{color:var(--bad);font-weight:700}
+.small{font-size:12px;color:var(--muted);line-height:1.45}
+button{
+  border:1px solid var(--line); background:#1b2530; color:var(--text);
+  border-radius:12px; padding:11px 14px; font-weight:700; font-size:15px;
+}
+button.primary{background:var(--accent);color:#07111b;border:none}
+button.danger{background:transparent;color:#ff8f8f}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.rowedit{display:grid;grid-template-columns:1fr 1fr 42px;gap:8px;margin-top:8px;align-items:end}
+.rowedit button{padding:12px 0}
+.badge{
+  display:inline-block;padding:5px 9px;border-radius:999px;background:#182330;
+  border:1px solid var(--line);color:var(--muted);font-size:12px;margin-top:7px
+}
+.note{width:100%;min-height:72px;background:var(--card2);border:1px solid var(--line);
+ border-radius:12px;color:var(--text);padding:12px;font-size:15px;resize:vertical}
+.footer{color:var(--muted);font-size:11px;line-height:1.5;padding:4px 3px 24px}
+@media (max-width:520px){
+  .summary{grid-template-columns:1fr}
+  th:nth-child(4),td:nth-child(4){display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Oil Market Edge</h1>
+  <div class="sub">Manual Brent / Kalshi threshold calculator — iPhone version</div>
+
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <label>Brent reference price ($)</label>
+        <input id="brent" type="number" step="0.01" value="104.60">
+      </div>
+      <div>
+        <label>Stake per contract ($)</label>
+        <input id="stake" type="number" step="0.01" value="3.00">
+      </div>
+    </div>
+    <div class="summary">
+      <div class="kpi"><div class="v" id="bestCushion">—</div><div class="l">Largest cushion</div></div>
+      <div class="kpi"><div class="v" id="lowestBE">—</div><div class="l">Lowest break-even</div></div>
+      <div class="kpi"><div class="v" id="updated">—</div><div class="l">Last recalculated</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Kalshi thresholds and current YES prices</label>
+    <div id="rows"></div>
+    <div class="actions">
+      <button id="add">+ Add threshold</button>
+      <button id="reset">Reset defaults</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Contract</th>
+          <th>Cushion</th>
+          <th>Break-even</th>
+          <th>Contracts</th>
+          <th>Payout</th>
+          <th>Profit</th>
+        </tr>
+      </thead>
+      <tbody id="results"></tbody>
+    </table>
+    <div class="small" style="margin-top:10px">
+      Assumes the YES price you enter is your actual execution price. Excludes fees, slippage and settlement-basis differences.
+    </div>
+  </div>
+
+  <div class="card">
+    <label>Quick news / market note</label>
+    <textarea id="note" class="note" placeholder="Example: Saudi pipeline attacked; Brent +$2.10 since headline..."></textarea>
+    <div class="badge">Saved automatically on this device</div>
+  </div>
+
+  <div class="footer">
+    This tool is for decision support, not automatic trading. A positive cushion does not mean a contract is likely to win; oil can move sharply on geopolitical or diplomatic headlines, and Kalshi settlement rules may use a specific reference feed.
+  </div>
+</div>
+
+<script>
+const defaults = [
+  {t:98.50, p:61.7},
+  {t:100.00, p:46.9},
+  {t:101.50, p:31.6}
+];
+
+let data = JSON.parse(localStorage.getItem("oilEdgeRows") || "null") || defaults;
+const brent = document.getElementById("brent");
+const stake = document.getElementById("stake");
+const rows = document.getElementById("rows");
+const results = document.getElementById("results");
+const note = document.getElementById("note");
+note.value = localStorage.getItem("oilEdgeNote") || "";
+brent.value = localStorage.getItem("oilEdgeBrent") || brent.value;
+stake.value = localStorage.getItem("oilEdgeStake") || stake.value;
+
+function money(x){ return isFinite(x) ? "$"+x.toFixed(2) : "—"; }
+
+function renderRows(){
+  rows.innerHTML = "";
+  data.forEach((r,i)=>{
+    const d = document.createElement("div");
+    d.className = "rowedit";
+    d.innerHTML = `
+      <div><label>Threshold ($)</label><input type="number" step="0.50" value="${r.t}" data-i="${i}" data-k="t"></div>
+      <div><label>YES price (¢)</label><input type="number" step="0.1" min="0.1" max="99.9" value="${r.p}" data-i="${i}" data-k="p"></div>
+      <button class="danger" data-del="${i}" aria-label="Delete">×</button>`;
+    rows.appendChild(d);
+  });
+  rows.querySelectorAll("input").forEach(el=>el.addEventListener("input", e=>{
+    data[+e.target.dataset.i][e.target.dataset.k] = +e.target.value;
+    save(); calc();
+  }));
+  rows.querySelectorAll("[data-del]").forEach(b=>b.addEventListener("click", ()=>{
+    data.splice(+b.dataset.del,1); save(); renderRows(); calc();
+  }));
+}
+
+function save(){
+  localStorage.setItem("oilEdgeRows", JSON.stringify(data));
+  localStorage.setItem("oilEdgeBrent", brent.value);
+  localStorage.setItem("oilEdgeStake", stake.value);
+}
+function calc(){
+  const b = +brent.value, s = +stake.value;
+  results.innerHTML="";
+  let maxC = -Infinity, minBE = Infinity;
+  data.forEach(r=>{
+    const threshold = +r.t, cents = +r.p;
+    const cushion = b-threshold;
+    const be = cents;
+    const price = cents/100;
+    const contracts = price>0 ? s/price : NaN;
+    const payout = contracts;
+    const profit = payout-s;
+    maxC = Math.max(maxC,cushion);
+    minBE = Math.min(minBE,be);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>&gt; $${threshold.toFixed(2)}</td>
+      <td class="${cushion>=0?'pos':'neg'}">${cushion>=0?'+':''}$${cushion.toFixed(2)}</td>
+      <td>${be.toFixed(1)}%</td>
+      <td>${isFinite(contracts)?contracts.toFixed(2):'—'}</td>
+      <td>${money(payout)}</td>
+      <td class="${profit>=0?'pos':'neg'}">${money(profit)}</td>`;
+    results.appendChild(tr);
+  });
+  document.getElementById("bestCushion").textContent = isFinite(maxC) ? (maxC>=0?"+":"")+"$"+maxC.toFixed(2) : "—";
+  document.getElementById("lowestBE").textContent = isFinite(minBE) ? minBE.toFixed(1)+"%" : "—";
+  document.getElementById("updated").textContent = new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  save();
+}
+brent.addEventListener("input", calc);
+stake.addEventListener("input", calc);
+note.addEventListener("input", ()=>localStorage.setItem("oilEdgeNote", note.value));
+document.getElementById("add").addEventListener("click", ()=>{
+  data.push({t:99.00,p:50.0}); save(); renderRows(); calc();
+});
+document.getElementById("reset").addEventListener("click", ()=>{
+  data = JSON.parse(JSON.stringify(defaults)); save(); renderRows(); calc();
+});
+
+renderRows(); calc();
+</script>
+</body>
+</html>
